@@ -204,8 +204,12 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             return result;
         }
 
-        public int[] calculatePerpendicularVector(int[] A, int[] B, int[] C, int magnitude) {
+        public int[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude) {
             // Calculate vectors u and v
+            int[] A = new int[] {xPoints[0], yPoints[0], zPoints[0]};
+            int[] B = new int[] {xPoints[1], yPoints[1], zPoints[1]};
+            int[] C = new int[] {xPoints[2], yPoints[2], zPoints[2]};
+
             double[] u = new double[]{B[0] - A[0], B[1] - A[1], B[2] - A[2]};
             double[] v = new double[]{C[0] - A[0], C[1] - A[1], C[2] - A[2]};
 
@@ -566,7 +570,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
         public void prism(int[][] points, int height, int[] director, double scale, int[] p0, String projection, int direction, Color color, BufferedImage buffer) {
             // ---------- Calculations ----------
             // Height vector
-            int[] heightVector = calculatePerpendicularVector(new int[]{points[0][0], points[1][0], points[2][0]}, new int[]{points[0][1], points[1][1], points[2][1]}, new int[]{points[0][2], points[1][2], points[2][2]}, height);
+            int[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height);
 
             // Bottom face
             int[][] projectedPoints1 = projection(points, director, p0, scale, projection);
@@ -607,51 +611,6 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             }
         }
 
-        public void cosa(int[][] points, int[] director, double scale, int[] p0, String projection, Color color, BufferedImage buffer) {
-            int[] xPoints = points[0];
-            int[] yPoints = points[1];
-            int nPoints = xPoints.length;
-
-            int sumX = 0;
-            int sumY = 0;
-            for (int i = 0; i < points[0].length; i++) {
-                sumX += xPoints[i];
-                sumY += yPoints[i];
-            }
-            int centroidX = (sumX / nPoints) + p0[0];
-            int centroidY = (sumY / nPoints) + p0[1];
-
-            double point1 = Math.sqrt(Math.pow(points[0][0], 2) + Math.pow(points[1][0], 2));
-            double point2 = Math.sqrt(Math.pow(points[0][2], 2) + Math.pow(points[1][2], 2));
-            double distance1 = Math.abs(point1 - point2) / 2;
-
-            double point3 = Math.sqrt(Math.pow(points[0][0], 2) + Math.pow(points[1][0], 2));
-            double point4 = Math.sqrt(Math.pow(points[0][1], 2) + Math.pow(points[1][1], 2));
-            double distance2 = Math.abs(point3 - point4);
-
-            double heightNum = Math.sqrt(Math.pow(distance2, 2) - Math.pow(distance1, 2));
-
-            int[] height = calculatePerpendicularVector(new int[] {points[0][0], points[1][0], points[2][0]}, new int[] {points[0][1], points[1][1], points[2][1]}, new int[] {points[0][2], points[1][2], points[2][2]}, (int) heightNum);
-
-
-            int[][] heights = new int[][] {
-                    height,
-                    new int[] {height[0], height[1], -height[2]}
-            };
-
-            int[][] projectedPoints2 = projection(heights, director, p0, scale, projection);
-
-            Shape.fillCircle(centroidX, centroidY, 3, Color.red, buffer);
-
-            int[][] projectedPoints = projection(points, director, p0, scale, projection);
-            drawPolygon(
-                    projectedPoints[0],
-                    projectedPoints[1],
-                    color,
-                    buffer
-            );
-            drawLine(centroidX, centroidY, projectedPoints2[0][0], projectedPoints2[0][1], Color.white, buffer);
-        }
 
         public int[][] star(int xc, int yc) {
             int outerRadius = 10;
@@ -707,7 +666,6 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);
-
             g.drawImage(buffer, 0, 0, this);
         }
     }
