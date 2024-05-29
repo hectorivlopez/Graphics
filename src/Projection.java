@@ -611,6 +611,59 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             }
         }
 
+        public void biPyramid(int[][] points, int height, int[] director, double scale, int[] p0, String projection, Color color, BufferedImage buffer) {
+            // Calculate the centroid
+            int[] xPoints = points[0];
+            int[] yPoints = points[1];
+            int[] zPoints = points[2];
+
+            int numVertices = xPoints.length;
+
+            int xSum = 0;
+            int ySum = 0;
+            int zSum = 0;
+
+            for (int i = 0; i < numVertices; i++) {
+                xSum += xPoints[i];
+                ySum += yPoints[i];
+                zSum += zPoints[i];
+            }
+
+            int xc = (int) ((double) xSum / ((double) numVertices));
+            int yc = (int) ((double) ySum / ((double) numVertices));
+            int zc = (int) ((double) zSum / ((double) numVertices));
+
+            // Calculate height vectors
+            int[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
+            int[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
+
+            int[][] heightsPoints = new int[][] {
+                    new int[] {xc + heightVector1[0], xc + heightVector2[0]},
+                    new int[] {yc + heightVector1[1], yc + heightVector2[1]},
+                    new int[] {zc + heightVector1[2], zc + heightVector2[2]},
+
+            };
+
+            int[][] projectedPoints = projection(points, director, p0, scale, projection);
+            int[][] projectedHeightsPoints = projection(heightsPoints, director, p0, scale, projection);
+
+            drawPolygon(
+                    projectedPoints[0],
+                    projectedPoints[1],
+                    color,
+                    buffer
+            );
+
+            //drawLine(projectedHeightsPoints[0][0], projectedHeightsPoints[1][0], projectedHeightsPoints[0][1], projectedHeightsPoints[1][1], Color.red, buffer);
+
+            for(int i = 0; i < projectedPoints.length; i++) {
+                drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][0], projectedHeightsPoints[1][0], Color.white, buffer);
+                drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][1], projectedHeightsPoints[1][1], Color.blue, buffer);
+            }
+
+        }
+
+
 
         public int[][] star(int xc, int yc) {
             int outerRadius = 10;
@@ -655,17 +708,19 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             };
 
             int[][] points = new int[][]{
-                    new int[]{0, 100, 100, 0},
-                    new int[]{0, 0, 100, 100},
-                    new int[]{0,0,0,0}
+                    new int[]{-50, 50, 50, -50},
+                    new int[]{0,0,0,0},
+                    new int[]{100, 100, 200, 200},
             };
 
 
             //cube(-10, -10, 0, 20, 20, 30, director, 5, origin2D, "perspective", Color.white, buffer);
             //cosa(points, director, 1, origin2D, "oblique", Color.green, buffer);
+            biPyramid(points, 70, director, 1, origin2D, "oblique", Color.green, buffer);
 
-            int[][] star = star(0, 0);
-            prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);
+           /* int[][] star = star(0, 0);
+            prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
+
             g.drawImage(buffer, 0, 0, this);
         }
     }
