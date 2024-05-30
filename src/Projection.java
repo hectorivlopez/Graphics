@@ -743,8 +743,32 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                         int[] faceZPoints = {allPoints[2][face[0]], allPoints[2][face[1]], allPoints[2][face[2]]};
 
                         double[] perpendicularVector = calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10);
-                        double[] doubleDirector = projection.equals("orthogonal") ? new double[]{0, 0, 1} : new double[]{director[0], director[1], director[2]};
-                        double dotProduct = calculateDotProduct(perpendicularVector, doubleDirector);
+
+                        double[] directionVector = new double[]{
+                                director[0],
+                                director[1],
+                                director[2]
+                        };
+
+                        if (projection.equals("orthogonal")) {
+                            directionVector = new double[]{0, 0, 1};
+                        }
+
+                        if(projection.equals("perspective")){
+                            double[] faceCentroid = {
+                                    (faceXPoints[0] + faceXPoints[1] + faceXPoints[2]) / 3.0,
+                                    (faceYPoints[0] + faceYPoints[1] + faceYPoints[2]) / 3.0,
+                                    (faceZPoints[0] + faceZPoints[1] + faceZPoints[2]) / 3.0
+                            };
+
+                            directionVector = new double[]{
+                                    director[0] - faceCentroid[0],
+                                    director[1] - faceCentroid[1],
+                                    director[2] - faceCentroid[2]
+                            };
+                        }
+
+                        double dotProduct = calculateDotProduct(perpendicularVector, directionVector);
 
                         // Drawing
                         if (dotProduct < 0 && i >= numVertices || dotProduct > 0 && i < numVertices) {
@@ -850,8 +874,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             //cube(-10, -10, 0, 20, 20, 30, director, 5, origin2D, "perspective", Color.white, buffer);
 
             biPyramid(points1, 70, director, 1, origin2D, "orthogonal", false, Color.white, Color.red, buffer);
-            biPyramid(points2, 70, director, 1, origin2D, "oblique", false, Color.white, null, buffer);
-            biPyramid(points, 70, director, 1, origin2D, "perspective", false, Color.white, null, buffer);
+            biPyramid(points2, 70, director, 1, origin2D, "oblique", true, Color.white, Color.green, buffer);
+            biPyramid(points, 70, director, 1, origin2D, "perspective", true, Color.white, Color.blue, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
