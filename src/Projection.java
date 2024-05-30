@@ -3,6 +3,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.nio.Buffer;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
 
 public class Projection extends JFrame implements ActionListener, MouseListener, MouseMotionListener {
     private int width;
@@ -121,7 +124,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             this.width = width;
             this.height = height;
 
-            this.director = new int[]{0, 0, 100};
+            this.director = new int[]{0, 0, 600};
 
             this.origin2D = new int[]{width / 2, height / 2};
         }
@@ -204,24 +207,25 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             return result;
         }
 
-        public int[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude) {
-            // Calculate vectors u and v
-            int[] A = new int[] {xPoints[0], yPoints[0], zPoints[0]};
-            int[] B = new int[] {xPoints[1], yPoints[1], zPoints[1]};
-            int[] C = new int[] {xPoints[2], yPoints[2], zPoints[2]};
+        public double[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude) {
+            // Vectors u and v
+            int[] A = new int[]{xPoints[0], yPoints[0], zPoints[0]};
+            int[] B = new int[]{xPoints[1], yPoints[1], zPoints[1]};
+            int[] C = new int[]{xPoints[2], yPoints[2], zPoints[2]};
 
             double[] u = new double[]{B[0] - A[0], B[1] - A[1], B[2] - A[2]};
             double[] v = new double[]{C[0] - A[0], C[1] - A[1], C[2] - A[2]};
 
-            // Calculate the cross product u x v
+            // Cross product u x v
             double[] normal = new double[]{
                     u[1] * v[2] - u[2] * v[1],
                     u[2] * v[0] - u[0] * v[2],
                     u[0] * v[1] - u[1] * v[0]
             };
 
-            // Calculate the magnitude of the normal vector
+            // Normal vector
             double normalMagnitude = Math.sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+            if (normalMagnitude == 0) return new double[]{0, 0, 0};
 
             // Normalize the normal vector
             double[] normalized = new double[]{
@@ -230,14 +234,18 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     normal[2] / normalMagnitude
             };
 
-            // Scale the normal vector to the desired magnitude
-            int[] scaled = new int[]{
-                    (int) (normalized[0] * magnitude),
-                    (int) (normalized[1] * magnitude),
-                    (int) (normalized[2] * magnitude)
+            // Scale the normal vector
+            double[] scaled = new double[]{
+                    /*(int)*/ (normalized[0] * magnitude),
+                    /*(int)*/ (normalized[1] * magnitude),
+                    /*(int)*/ (normalized[2] * magnitude)
             };
 
             return scaled;
+        }
+
+        public double calculateDotProduct(double[] a, double[] b) {
+            return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         }
 
         // ------------------------------ Drawing ------------------------------
@@ -354,6 +362,66 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             drawLine(xPoints[xPoints.length - 1], yPoints[yPoints.length - 1], xPoints[0], yPoints[0], color, buffer);
 
         }
+
+        public void floodFill(int x, int y, Color targetColor, BufferedImage buffer) {
+            int originalColor = buffer.getRGB(x, y);
+
+            if (originalColor == targetColor.getRGB()) {
+                return;
+            }
+
+            Deque<int[]> stack = new ArrayDeque<>();
+            stack.push(new int[]{x, y});
+
+            while (!stack.isEmpty()) {
+                int[] currentPixel = stack.pop();
+                int px = currentPixel[0];
+                int py = currentPixel[1];
+
+                if (buffer.getRGB(px, py) != targetColor.getRGB()) {
+                    //buffer.setRGB(px, py, targetColor.getRGB());
+                    draw(px, py, targetColor, buffer);
+
+                    if (px + 1 >= 0 && px + 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
+                        stack.push(new int[]{px + 1, py});
+                    }
+                    if (px - 1 >= 0 && px - 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
+                        stack.push(new int[]{px - 1, py});
+                    }
+                    if (px >= 0 && px < buffer.getWidth() && py + 1 >= 0 && py + 1 < buffer.getHeight()) {
+                        stack.push(new int[]{px, py + 1});
+                    }
+                    if (px >= 0 && px < buffer.getWidth() && py - 1 >= 0 && py - 1 < buffer.getHeight()) {
+                        stack.push(new int[]{px, py - 1});
+                    }
+
+                }
+            }
+        }
+
+        public void fillPolygon(int[] xPoints, int[] yPoints, int[] center, Color color, BufferedImage buffer) {
+            int nPoints = xPoints.length;
+
+            drawPolygon(xPoints, yPoints, color, buffer);
+
+            // Calculate centroid of the polygon
+            int sumX = 0;
+            int sumY = 0;
+            for (int i = 0; i < nPoints; i++) {
+                sumX += xPoints[i];
+                sumY += yPoints[i];
+            }
+            int centroidX = sumX / nPoints;
+            int centroidY = sumY / nPoints;
+
+            // Now fill the polygon using flood fill from the centroid
+            if (center == null) {
+                floodFill(centroidX, centroidY, color, buffer);
+            } else {
+                floodFill(center[0], center[1], color, buffer);
+            }
+        }
+
 
         public int[][] scale(int[] xPoints, int[] yPoints, int xc, int yc, boolean center, double xScale, double yScale) {
             int xCenter = 0 + xc;
@@ -570,7 +638,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
         public void prism(int[][] points, int height, int[] director, double scale, int[] p0, String projection, int direction, Color color, BufferedImage buffer) {
             // ---------- Calculations ----------
             // Height vector
-            int[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height);
+            double[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height);
 
             // Bottom face
             int[][] projectedPoints1 = projection(points, director, p0, scale, projection);
@@ -578,9 +646,9 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             // Top face
             int[][] topPoints = new int[3][points[0].length];
             for (int i = 0; i < points[0].length; i++) {
-                topPoints[0][i] = points[0][i] + (direction * heightVector[0]);
-                topPoints[1][i] = points[1][i] + (direction * heightVector[1]);
-                topPoints[2][i] = points[2][i] + (direction * heightVector[2]);
+                topPoints[0][i] = points[0][i] + (int) (direction * heightVector[0]);
+                topPoints[1][i] = points[1][i] + (int) (direction * heightVector[1]);
+                topPoints[2][i] = points[2][i] + (int) (direction * heightVector[2]);
                 /*System.out.println("Cara1: (" + points[i][0] + ", " + points[i][1] + ", " + points[i][2] + ")");
                 System.out.println("Cara2: (" + topPoints[i][0] + ", " + topPoints[i][1] + ", " + topPoints[i][2] + ")");*/
             }
@@ -611,7 +679,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             }
         }
 
-        public void biPyramid(int[][] points, int height, int[] director, double scale, int[] p0, String projection, Color color, BufferedImage buffer) {
+        public void biPyramid(int[][] points, int height, int[] director, double scale, int[] p0, String projection, Boolean onlyFront, Color borderColor, Color color, BufferedImage buffer) {
             // Calculate the centroid
             int[] xPoints = points[0];
             int[] yPoints = points[1];
@@ -633,36 +701,90 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             int yc = (int) ((double) ySum / ((double) numVertices));
             int zc = (int) ((double) zSum / ((double) numVertices));
 
+            int[] centroid = {xc, yc, zc};
+
             // Calculate height vectors
-            int[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
-            int[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
+            double[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
+            double[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
 
-            int[][] heightsPoints = new int[][] {
-                    new int[] {xc + heightVector1[0], xc + heightVector2[0]},
-                    new int[] {yc + heightVector1[1], yc + heightVector2[1]},
-                    new int[] {zc + heightVector1[2], zc + heightVector2[2]},
+            if (onlyFront) {
+                // Matrix with all the points
+                int[][] allPoints = new int[3][points[0].length + 2];
 
-            };
+                for (int i = 0; i < 3; i++) {
+                    int[] newPoints = Arrays.copyOf(points[i], points[i].length + 2);
+                    newPoints[newPoints.length - 2] = centroid[i] + (int) heightVector1[i];
+                    newPoints[newPoints.length - 1] = centroid[i] + (int) heightVector2[i];
 
-            int[][] projectedPoints = projection(points, director, p0, scale, projection);
-            int[][] projectedHeightsPoints = projection(heightsPoints, director, p0, scale, projection);
+                    allPoints[i] = newPoints;
+                }
 
-            drawPolygon(
-                    projectedPoints[0],
-                    projectedPoints[1],
-                    color,
-                    buffer
-            );
+                // Projection
+                int[][] projectedPoints = projection(allPoints, director, p0, scale, projection);
 
-            //drawLine(projectedHeightsPoints[0][0], projectedHeightsPoints[1][0], projectedHeightsPoints[0][1], projectedHeightsPoints[1][1], Color.red, buffer);
+                if (projectedPoints != null) {
+                    // Vertices of each face
+                    int[][] faces = new int[numVertices * 2][3];
+                    for (int i = 0; i < numVertices; i++) {
+                        if (i < numVertices - 1) {
+                            faces[i] = new int[]{i, i + 1, numVertices};
+                            faces[numVertices + i] = new int[]{i, i + 1, numVertices + 1};
+                        } else {
+                            faces[i] = new int[]{i, 0, numVertices};
+                            faces[numVertices + i] = new int[]{i, 0, numVertices + 1};
+                        }
+                    }
 
-            for(int i = 0; i < projectedPoints.length; i++) {
-                drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][0], projectedHeightsPoints[1][0], Color.white, buffer);
-                drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][1], projectedHeightsPoints[1][1], Color.blue, buffer);
+                    // Back-face culling
+                    for (int i = 0; i < faces.length; i++) {
+                        int[] face = faces[i];
+                        int[] faceXPoints = {allPoints[0][face[0]], allPoints[0][face[1]], allPoints[0][face[2]]};
+                        int[] faceYPoints = {allPoints[1][face[0]], allPoints[1][face[1]], allPoints[1][face[2]]};
+                        int[] faceZPoints = {allPoints[2][face[0]], allPoints[2][face[1]], allPoints[2][face[2]]};
+
+                        double[] perpendicularVector = calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10);
+                        double[] doubleDirector = projection.equals("orthogonal") ? new double[]{0, 0, 1} : new double[]{director[0], director[1], director[2]};
+                        double dotProduct = calculateDotProduct(perpendicularVector, doubleDirector);
+
+                        // Drawing
+                        if (dotProduct < 0 && i >= numVertices || dotProduct > 0 && i < numVertices) {
+                            int[] projectedFaceXPoints = {projectedPoints[0][face[0]], projectedPoints[0][face[1]], projectedPoints[0][face[2]]};
+                            int[] projectedFaceYPoints = {projectedPoints[1][face[0]], projectedPoints[1][face[1]], projectedPoints[1][face[2]]};
+
+                            if (color != null) fillPolygon(projectedFaceXPoints, projectedFaceYPoints, null, color, buffer);
+                            drawLine(projectedFaceXPoints[0], projectedFaceYPoints[0], projectedFaceXPoints[1], projectedFaceYPoints[1], borderColor, buffer);
+                            drawLine(projectedFaceXPoints[1], projectedFaceYPoints[1], projectedFaceXPoints[2], projectedFaceYPoints[2], borderColor, buffer);
+                            drawLine(projectedFaceXPoints[2], projectedFaceYPoints[2], projectedFaceXPoints[0], projectedFaceYPoints[0], borderColor, buffer);
+                        }
+                    }
+                }
+            } else {
+                int[][] heightsPoints = new int[][]{
+                        new int[]{xc + (int) heightVector1[0], xc + (int) heightVector2[0]},
+                        new int[]{yc + (int) heightVector1[1], yc + (int) heightVector2[1]},
+                        new int[]{zc + (int) heightVector1[2], zc + (int) heightVector2[2]},
+                };
+
+                // Projection
+                int[][] projectedPoints = projection(points, director, p0, scale, projection);
+                int[][] projectedHeightsPoints = projection(heightsPoints, director, p0, scale, projection);
+
+                // Drawing
+                if (projectedPoints != null && projectedHeightsPoints != null) {
+                    drawPolygon(
+                            projectedPoints[0],
+                            projectedPoints[1],
+                            borderColor,
+                            buffer
+                    );
+
+                    for (int i = 0; i < projectedPoints.length; i++) {
+                        drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][0], projectedHeightsPoints[1][0], borderColor, buffer);
+                        drawLine(projectedPoints[0][i], projectedPoints[1][i], projectedHeightsPoints[0][1], projectedHeightsPoints[1][1], borderColor, buffer);
+                    }
+                }
             }
-
         }
-
 
 
         public int[][] star(int xc, int yc) {
@@ -709,14 +831,27 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             int[][] points = new int[][]{
                     new int[]{-50, 50, 50, -50},
-                    new int[]{0,0,0,0},
+                    new int[]{0, 0, 0, 0},
                     new int[]{100, 100, 200, 200},
             };
 
+            int[][] points1 = new int[][]{
+                    new int[]{-200, -100, -100, -200},
+                    new int[]{0, 0, 0, 0},
+                    new int[]{100, 100, 200, 200},
+            };
+
+            int[][] points2 = new int[][]{
+                    new int[]{100, 200, 200, 100},
+                    new int[]{0, 0, 0, 0},
+                    new int[]{100, 100, 200, 200},
+            };
 
             //cube(-10, -10, 0, 20, 20, 30, director, 5, origin2D, "perspective", Color.white, buffer);
-            //cosa(points, director, 1, origin2D, "oblique", Color.green, buffer);
-            biPyramid(points, 70, director, 1, origin2D, "oblique", Color.green, buffer);
+
+            biPyramid(points1, 70, director, 1, origin2D, "orthogonal", false, Color.white, Color.red, buffer);
+            biPyramid(points2, 70, director, 1, origin2D, "oblique", false, Color.white, null, buffer);
+            biPyramid(points, 70, director, 1, origin2D, "perspective", false, Color.white, null, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
