@@ -248,6 +248,18 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         }
 
+        public boolean isPointInPolygon(int x, int y, int[] polyX, int[] polyY) {
+            boolean inside = false;
+            int nPoints = polyX.length;
+            for (int i = 0, j = nPoints - 1; i < nPoints; j = i++) {
+                if ((polyY[i] > y) != (polyY[j] > y) &&
+                        (x < (polyX[j] - polyX[i]) * (y - polyY[i]) / (polyY[j] - polyY[i]) + polyX[i])) {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
         // ------------------------------ Drawing ------------------------------
         private void draw(int x, int y, Color color, BufferedImage buffer) {
             if (x >= 0 && x < buffer.getWidth() && y >= 0 && y < buffer.getHeight()) {
@@ -364,38 +376,41 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
         }
 
         public void floodFill(int x, int y, Color targetColor, BufferedImage buffer) {
-            int originalColor = buffer.getRGB(x, y);
+            if (x >= 0 && x < buffer.getWidth() && y >= 0 && y < buffer.getHeight()) {
+                int originalColor = buffer.getRGB(x, y);
 
-            if (originalColor == targetColor.getRGB()) {
-                return;
-            }
-
-            Deque<int[]> stack = new ArrayDeque<>();
-            stack.push(new int[]{x, y});
-
-            while (!stack.isEmpty()) {
-                int[] currentPixel = stack.pop();
-                int px = currentPixel[0];
-                int py = currentPixel[1];
-
-                if (buffer.getRGB(px, py) != targetColor.getRGB()) {
-                    //buffer.setRGB(px, py, targetColor.getRGB());
-                    draw(px, py, targetColor, buffer);
-
-                    if (px + 1 >= 0 && px + 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
-                        stack.push(new int[]{px + 1, py});
-                    }
-                    if (px - 1 >= 0 && px - 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
-                        stack.push(new int[]{px - 1, py});
-                    }
-                    if (px >= 0 && px < buffer.getWidth() && py + 1 >= 0 && py + 1 < buffer.getHeight()) {
-                        stack.push(new int[]{px, py + 1});
-                    }
-                    if (px >= 0 && px < buffer.getWidth() && py - 1 >= 0 && py - 1 < buffer.getHeight()) {
-                        stack.push(new int[]{px, py - 1});
-                    }
-
+                if (originalColor == targetColor.getRGB() || x < 0 || x >= buffer.getWidth() - 1 || y < 0 || y >= buffer.getHeight() - 1) {
+                    return;
                 }
+
+                Deque<int[]> stack = new ArrayDeque<>();
+                stack.push(new int[]{x, y});
+
+                while (!stack.isEmpty()) {
+                    int[] currentPixel = stack.pop();
+                    int px = currentPixel[0];
+                    int py = currentPixel[1];
+
+                    if (buffer.getRGB(px, py) != targetColor.getRGB()) {
+                        //buffer.setRGB(px, py, targetColor.getRGB());
+                        draw(px, py, targetColor, buffer);
+
+                        if (px + 1 >= 0 && px + 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
+                            stack.push(new int[]{px + 1, py});
+                        }
+                        if (px - 1 >= 0 && px - 1 < buffer.getWidth() && py >= 0 && py < buffer.getHeight()) {
+                            stack.push(new int[]{px - 1, py});
+                        }
+                        if (px >= 0 && px < buffer.getWidth() && py + 1 >= 0 && py + 1 < buffer.getHeight()) {
+                            stack.push(new int[]{px, py + 1});
+                        }
+                        if (px >= 0 && px < buffer.getWidth() && py - 1 >= 0 && py - 1 < buffer.getHeight()) {
+                            stack.push(new int[]{px, py - 1});
+                        }
+
+                    }
+                }
+
             }
         }
 
@@ -404,7 +419,6 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             drawPolygon(xPoints, yPoints, color, buffer);
 
-            // Calculate centroid of the polygon
             int sumX = 0;
             int sumY = 0;
             for (int i = 0; i < nPoints; i++) {
@@ -414,14 +428,14 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             int centroidX = sumX / nPoints;
             int centroidY = sumY / nPoints;
 
-            // Now fill the polygon using flood fill from the centroid
             if (center == null) {
-                floodFill(centroidX, centroidY, color, buffer);
+                if (isPointInPolygon(centroidX, centroidY, xPoints, yPoints)) {
+                    floodFill(centroidX, centroidY, color, buffer);
+                }
             } else {
                 floodFill(center[0], center[1], color, buffer);
             }
         }
-
 
         public int[][] scale(int[] xPoints, int[] yPoints, int xc, int yc, boolean center, double xScale, double yScale) {
             int xCenter = 0 + xc;
@@ -754,7 +768,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                             directionVector = new double[]{0, 0, 1};
                         }
 
-                        if(projection.equals("perspective")){
+                        if (projection.equals("perspective")) {
                             double[] faceCentroid = {
                                     (faceXPoints[0] + faceXPoints[1] + faceXPoints[2]) / 3.0,
                                     (faceYPoints[0] + faceYPoints[1] + faceYPoints[2]) / 3.0,
