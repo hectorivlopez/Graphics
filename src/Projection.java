@@ -119,14 +119,32 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
         public int width;
         public int height;
 
+        public double scalejeje;
+        public boolean growing;
+
         public CustomPanel(int width, int height) {
             this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             this.width = width;
             this.height = height;
 
-            this.director = new int[]{0, 0, 600};
+            this.director = new int[]{0, 0, 20};
 
             this.origin2D = new int[]{width / 2, height / 2};
+
+            this.scalejeje = 1;
+            this.growing = false;
+
+            CustomThread thread = new CustomThread(() -> {
+                if (growing) {
+                    scalejeje += 0.1;
+                    if (scalejeje >= 10) growing = false;
+                }
+                else {
+                    scalejeje -= 0.1;
+                    if (scalejeje <= 0.5) growing = true;
+                }
+            }, 20, () -> false);
+            thread.start();
         }
 
         public void resize(int width, int height) {
@@ -179,7 +197,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     new int[]{0, 0, 500},
                     new int[]{0, 0, -500},
             };
-            int[][] projectedPoints = projection(points, director, origin2D, scale, "oblique");
+            int[][] projectedPoints = projection(points, director, "oblique");
 
             int[] xPoints = projectedPoints[0];
             int[] yPoints = projectedPoints[1];
@@ -519,6 +537,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
                 xCenter = sumX / xPoints.length;
                 yCenter = sumY / yPoints.length;
+                zCenter = sumZ / zPoints.length;
             }
 
             // Create initial matrix
@@ -526,15 +545,17 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             for (int i = 0; i < xPoints.length; i++) {
                 initialMatrix[0][i] = 0 + xPoints[i];
                 initialMatrix[1][i] = 0 + yPoints[i];
+                initialMatrix[2][i] = 0 + zPoints[i];
             }
 
             // Setting center to [0, 0]
             for (int i = 0; i < xPoints.length; i++) {
                 initialMatrix[0][i] -= xCenter;
                 initialMatrix[1][i] -= yCenter;
+                initialMatrix[2][i] -= zCenter;
             }
 
-            for (int i = 2; i < xPoints.length; i++) {
+            for (int i = 3; i < xPoints.length; i++) {
                 for (int j = 0; j < xPoints.length; j++) {
                     initialMatrix[i][j] = 1;
                 }
@@ -554,6 +575,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             scaleMatrix[0][0] = xScale;
             scaleMatrix[1][1] = yScale;
+            scaleMatrix[2][2] = zScale;
 
             int[][] resultMatrix = multiplyMatrices(scaleMatrix, initialMatrix);
 
@@ -561,12 +583,20 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             for (int i = 0; i < xPoints.length; i++) {
                 resultMatrix[0][i] += xCenter;
                 resultMatrix[1][i] += yCenter;
+                resultMatrix[2][i] += zCenter;
             }
+            /*for(int i = 0; i < initialMatrix.length; i++) {
+                System.out.print("[ ");
+                for(int j = 0; j < initialMatrix[0].length; j++) {
+                    System.out.print(initialMatrix[i][j] + ", ");
+                }
+                System.out.println("]");
+            }*/
 
             return resultMatrix;
         }
 
-        public int[][] projection(int[][] points, int[] director, int[] p0, double scale, String projection) {
+        public int[][] projection(int[][] points, int[] director, String projection) {
             int[][] projectedPoints = new int[2][points[0].length];
 
             if (projection.equals("oblique")) {
@@ -576,8 +606,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     int x = points[0][i] + (int) ((double) director[0] * u);
                     int y = points[1][i] + (int) ((double) director[1] * u);
 
-                    projectedPoints[0][i] = p0[0] + x;
-                    projectedPoints[1][i] = p0[1] + y;
+                    projectedPoints[0][i] = x;
+                    projectedPoints[1][i] = y;
                 }
             }
 
@@ -586,8 +616,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     int x = points[0][i];
                     int y = points[1][i];
 
-                    projectedPoints[0][i] = p0[0] + x;
-                    projectedPoints[1][i] = p0[1] + y;
+                    projectedPoints[0][i] = x;
+                    projectedPoints[1][i] = y;
                 }
             }
 
@@ -600,18 +630,18 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     int x = director[0] + (int) ((double) (points[0][i] - director[0]) * u);
                     int y = director[1] + (int) ((double) (points[1][i] - director[1]) * u);
 
-                    projectedPoints[0][i] = p0[0] + x;
-                    projectedPoints[1][i] = p0[1] + y;
+                    projectedPoints[0][i] = x;
+                    projectedPoints[1][i] = y;
                 }
             }
 
 
-            int[][] scaledPoints = scale(projectedPoints[0], projectedPoints[1], p0[0], p0[1], false, scale, scale);
+            //int[][] scaledPoints = scale(projectedPoints[0], projectedPoints[1], p0[0], p0[1], false, scale, scale);
 
-            return scaledPoints;
+            return projectedPoints;
         }
 
-        public void cube(int x0, int y0, int z0, int width, int depth, int height, int[] director, double scale, int[] p0, String projection, Color color, BufferedImage buffer) {
+        public void cube(int x0, int y0, int z0, int width, int depth, int height, int[] director, double scale, String projection, Color color, BufferedImage buffer) {
             int[][] points1 = new int[][]{
                     new int[]{x0, x0 + width, x0 + width, x0},
                     new int[]{y0, y0, y0 + depth, y0 + depth},
@@ -625,8 +655,13 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             };
 
-            int[][] projectedPoints1 = projection(points1, director, p0, scale, projection);
-            int[][] projectedPoints2 = projection(points2, director, p0, scale, projection);
+            // Scale
+            int[][] scaledPoints1 = scale3D(points1[0], points1[1], points1[2], x0, y0, z0, false, scale, scale, scale);
+            int[][] scaledPoints2 = scale3D(points2[0], points2[1], points2[2], x0, y0, z0, false, scale, scale, scale);
+
+            // Projection
+            int[][] projectedPoints1 = projection(scaledPoints1, director, projection);
+            int[][] projectedPoints2 = projection(scaledPoints2, director, projection);
 
             if (projectedPoints1 != null && projectedPoints2 != null) {
                 for (int i = 0; i < projectedPoints1[0].length; i++) {
@@ -651,11 +686,35 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
         public void prism(int[][] points, int height, int[] director, double scale, int[] p0, String projection, int direction, Color color, BufferedImage buffer) {
             // ---------- Calculations ----------
+            // Calculate the centroid
+            int[] xPoints = points[0];
+            int[] yPoints = points[1];
+            int[] zPoints = points[2];
+
+            int numVertices = xPoints.length;
+
+            int xSum = 0;
+            int ySum = 0;
+            int zSum = 0;
+
+            for (int i = 0; i < numVertices; i++) {
+                xSum += xPoints[i];
+                ySum += yPoints[i];
+                zSum += zPoints[i];
+            }
+
+            int xc = (int) ((double) xSum / ((double) numVertices));
+            int yc = (int) ((double) ySum / ((double) numVertices));
+            int zc = (int) ((double) zSum / ((double) numVertices));
+
             // Height vector
             double[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height);
 
-            // Bottom face
-            int[][] projectedPoints1 = projection(points, director, p0, scale, projection);
+            xc += (int) heightVector[0];
+            yc += (int) heightVector[1];
+            zc += (int) heightVector[2];
+
+            if(p0 == null) p0 = new int[]{xc, yc, zc};
 
             // Top face
             int[][] topPoints = new int[3][points[0].length];
@@ -667,7 +726,13 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                 System.out.println("Cara2: (" + topPoints[i][0] + ", " + topPoints[i][1] + ", " + topPoints[i][2] + ")");*/
             }
 
-            int[][] projectedPoints2 = projection(topPoints, director, p0, scale, projection);
+            // Scale
+            int[][] scaledPoints1 = scale3D(points[0], points[1], points[2], p0[0], p0[1], p0[2], false, scale, scale, scale);
+            int[][] scaledPoints2 = scale3D(topPoints[0], topPoints[1], topPoints[2], p0[0], p0[1], p0[2], false, scale, scale, scale);
+
+            // Projection
+            int[][] projectedPoints1 = projection(scaledPoints1, director, projection);
+            int[][] projectedPoints2 = projection(scaledPoints2, director, projection);
 
             // ---------- Drawing ----------
             if (projectedPoints1 != null && projectedPoints2 != null) {
@@ -717,6 +782,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             int[] centroid = {xc, yc, zc};
 
+            if(p0 == null) p0 = centroid;
+
             // Calculate height vectors
             double[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
             double[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
@@ -733,8 +800,11 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     allPoints[i] = newPoints;
                 }
 
+                // Scale
+                int[][] scaledAllPoints = scale3D(allPoints[0], allPoints[1], allPoints[2], p0[0], p0[1], p0[2], false, scale, scale, scale);
+
                 // Projection
-                int[][] projectedPoints = projection(allPoints, director, p0, scale, projection);
+                int[][] projectedPoints = projection(scaledAllPoints, director, projection);
 
                 if (projectedPoints != null) {
                     // Vertices of each face
@@ -789,7 +859,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                             int[] projectedFaceXPoints = {projectedPoints[0][face[0]], projectedPoints[0][face[1]], projectedPoints[0][face[2]]};
                             int[] projectedFaceYPoints = {projectedPoints[1][face[0]], projectedPoints[1][face[1]], projectedPoints[1][face[2]]};
 
-                            if (color != null) fillPolygon(projectedFaceXPoints, projectedFaceYPoints, null, color, buffer);
+                            if (color != null)
+                                fillPolygon(projectedFaceXPoints, projectedFaceYPoints, null, color, buffer);
                             drawLine(projectedFaceXPoints[0], projectedFaceYPoints[0], projectedFaceXPoints[1], projectedFaceYPoints[1], borderColor, buffer);
                             drawLine(projectedFaceXPoints[1], projectedFaceYPoints[1], projectedFaceXPoints[2], projectedFaceYPoints[2], borderColor, buffer);
                             drawLine(projectedFaceXPoints[2], projectedFaceYPoints[2], projectedFaceXPoints[0], projectedFaceYPoints[0], borderColor, buffer);
@@ -803,9 +874,13 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                         new int[]{zc + (int) heightVector1[2], zc + (int) heightVector2[2]},
                 };
 
+                // Scale
+                int[][] scaledPoints = scale3D(points[0], points[1], points[2], p0[0], p0[1], p0[2], false, scale, scale, scale);
+                int[][] scaledHeightsPoints = scale3D(heightsPoints[0], heightsPoints[1], heightsPoints[2], p0[0], p0[1], p0[2], false, scale, scale, scale);
+
                 // Projection
-                int[][] projectedPoints = projection(points, director, p0, scale, projection);
-                int[][] projectedHeightsPoints = projection(heightsPoints, director, p0, scale, projection);
+                int[][] projectedPoints = projection(scaledPoints, director, projection);
+                int[][] projectedHeightsPoints = projection(scaledHeightsPoints, director, projection);
 
                 // Drawing
                 if (projectedPoints != null && projectedHeightsPoints != null) {
@@ -885,11 +960,33 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     new int[]{100, 100, 200, 200},
             };
 
+            int[][] points3 = new int[][]{
+                    new int[]{-10 + origin2D[0], 0 + origin2D[0], 10 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1]},
+                    new int[]{0, 0, 0},
+            };
+
+            int[][] points4 = new int[][]{
+                    new int[]{-40, -30, -20, -30},
+                    new int[]{0, 10, 0, -10},
+                    new int[]{0, 0, 0, 0},
+            };
+
+            int[][] points5 = new int[][]{
+                    new int[]{20 + origin2D[0], 30 + origin2D[0], 40 + origin2D[0], 30 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
+
             //cube(-10, -10, 0, 20, 20, 30, director, 5, origin2D, "perspective", Color.white, buffer);
 
-            biPyramid(points1, 70, director, 1, origin2D, "orthogonal", false, Color.white, Color.red, buffer);
-            biPyramid(points2, 70, director, 1, origin2D, "oblique", true, Color.white, Color.green, buffer);
-            biPyramid(points, 70, director, 1, origin2D, "perspective", true, Color.white, Color.blue, buffer);
+            //biPyramid(points1, 70, director, 1, origin2D, "orthogonal", false, Color.white, Color.red, buffer);
+            //biPyramid(points2, 10, director, 1, origin2D, "perspective", false, Color.white, Color.green, buffer);
+            //biPyramid(points, 70, director, 1, origin2D, "perspective", false, Color.white, Color.blue, buffer);
+
+            //biPyramid(points3, 10, director, 10, null, "perspective", true, Color.white, Color.red, buffer);
+           // biPyramid(points4, 10, director, 10, origin2D, "orthogonal", true, Color.white, Color.green, buffer);
+            biPyramid(points5, 10, director, 10, null, "perspective", true, Color.white, null, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
@@ -955,5 +1052,11 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
     // ---------------------------------------- Execution ----------------------------------------
     public static void main(String[] args) {
         Projection window = new Projection();
+
+        CustomThread thread = new CustomThread(() -> {
+            window.bgPanel.repaint();
+        }, 20, () -> false);
+        thread.start();
+
     }
 }
