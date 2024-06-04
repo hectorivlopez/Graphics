@@ -127,7 +127,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             this.width = width;
             this.height = height;
 
-            this.director = new int[]{0, 0, 20};
+            this.director = new int[]{500, 250, 200};
 
             this.origin2D = new int[]{width / 2, height / 2};
 
@@ -942,51 +942,16 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     new int[]{120, 180, 180, 240, 240, 180, 180, 120},
             };
 
-            int[][] points = new int[][]{
-                    new int[]{-50, 50, 50, -50},
-                    new int[]{0, 0, 0, 0},
-                    new int[]{100, 100, 200, 200},
-            };
 
-            int[][] points1 = new int[][]{
-                    new int[]{-200, -100, -100, -200},
-                    new int[]{0, 0, 0, 0},
-                    new int[]{100, 100, 200, 200},
-            };
 
-            int[][] points2 = new int[][]{
-                    new int[]{100, 200, 200, 100},
-                    new int[]{0, 0, 0, 0},
-                    new int[]{100, 100, 200, 200},
-            };
-
-            int[][] points3 = new int[][]{
-                    new int[]{-10 + origin2D[0], 0 + origin2D[0], 10 + origin2D[0]},
-                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1]},
-                    new int[]{0, 0, 0},
-            };
-
-            int[][] points4 = new int[][]{
-                    new int[]{-40, -30, -20, -30},
-                    new int[]{0, 10, 0, -10},
-                    new int[]{0, 0, 0, 0},
-            };
 
             int[][] points5 = new int[][]{
-                    new int[]{20 + origin2D[0], 30 + origin2D[0], 40 + origin2D[0], 30 + origin2D[0]},
+                    new int[]{-10 + origin2D[0], 0 + origin2D[0], 10 + origin2D[0], 0 + origin2D[0]},
                     new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
                     new int[]{0, 0, 0, 0},
             };
 
-            //cube(-10, -10, 0, 20, 20, 30, director, 5, origin2D, "perspective", Color.white, buffer);
-
-            //biPyramid(points1, 70, director, 1, origin2D, "orthogonal", false, Color.white, Color.red, buffer);
-            //biPyramid(points2, 10, director, 1, origin2D, "perspective", false, Color.white, Color.green, buffer);
-            //biPyramid(points, 70, director, 1, origin2D, "perspective", false, Color.white, Color.blue, buffer);
-
-            //biPyramid(points3, 10, director, 10, null, "perspective", true, Color.white, Color.red, buffer);
-           // biPyramid(points4, 10, director, 10, origin2D, "orthogonal", true, Color.white, Color.green, buffer);
-            biPyramid(points5, 10, director, 10, null, "perspective", true, Color.white, null, buffer);
+           biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, null, "oblique", true, Color.white, null, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
