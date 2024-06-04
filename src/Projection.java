@@ -822,9 +822,9 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     // Back-face culling
                     for (int i = 0; i < faces.length; i++) {
                         int[] face = faces[i];
-                        int[] faceXPoints = {allPoints[0][face[0]], allPoints[0][face[1]], allPoints[0][face[2]]};
-                        int[] faceYPoints = {allPoints[1][face[0]], allPoints[1][face[1]], allPoints[1][face[2]]};
-                        int[] faceZPoints = {allPoints[2][face[0]], allPoints[2][face[1]], allPoints[2][face[2]]};
+                        int[] faceXPoints = {scaledAllPoints[0][face[0]], scaledAllPoints[0][face[1]], scaledAllPoints[0][face[2]]};
+                        int[] faceYPoints = {scaledAllPoints[1][face[0]], scaledAllPoints[1][face[1]], scaledAllPoints[1][face[2]]};
+                        int[] faceZPoints = {scaledAllPoints[2][face[0]], scaledAllPoints[2][face[1]], scaledAllPoints[2][face[2]]};
 
                         double[] perpendicularVector = calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10);
 
