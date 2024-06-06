@@ -123,6 +123,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
         public double angle;
         public double angle2;
         public boolean growing;
+        public int x;
+        public boolean toRight;
 
         public CustomPanel(int width, int height) {
             this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -137,8 +139,10 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             this.angle = 0;
             this.angle2 = 0;
             this.growing = false;
+            this.x = 500;
+            this.toRight = true;
 
-            CustomThread thread = new CustomThread(() -> {
+            CustomThread scaleThread = new CustomThread(() -> {
                 if (growing) {
                     scalejeje += 0.1;
                     if (scalejeje >= 10) growing = false;
@@ -148,7 +152,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     if (scalejeje <= 0.5) growing = true;
                 }
             }, 20, () -> false);
-            thread.start();
+            scaleThread.start();
 
             CustomThread rotateThread = new CustomThread(() -> {
                 angle += 0.1;
@@ -160,6 +164,18 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             }, 100, () -> false);
             rotateThread.start();
+
+            CustomThread moveThread = new CustomThread(() -> {
+                if (toRight) {
+                    x ++;
+                    if (x >= 200) toRight = false;
+                }
+                else {
+                    x --;
+                    if (x <= -200) toRight = true;
+                }
+            }, 20, () -> false);
+            moveThread.start();
         }
 
         public void resize(int width, int height) {
@@ -469,6 +485,71 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                 floodFill(center[0], center[1], color, buffer);
             }
         }
+
+        public int[][] translate(int[] xPoints, int[] yPoints, int xMove, int yMove) {
+            int[][] initialMatrix = new int[xPoints.length][xPoints.length];
+            initialMatrix[0] = xPoints;
+            initialMatrix[1] = yPoints;
+
+            for(int i = 2; i < xPoints.length; i++) {
+                for(int j = 0; j < xPoints.length; j++) {
+                    initialMatrix[i][j] = 1;
+                }
+            }
+
+            double[][] translateMatrix = new double[xPoints.length][xPoints.length];
+            for(int i = 0; i < xPoints.length; i++) {
+                for(int j = 0; j < xPoints.length; j++) {
+                    if(i == j) {
+                        translateMatrix[i][j] = 1;
+                    }
+                    else {
+                        translateMatrix[i][j] = 0;
+                    }
+                }
+            }
+
+            translateMatrix[0][xPoints.length - 1] = xMove;
+            translateMatrix[1][xPoints.length - 1] = yMove;
+
+            int[][] resultMatrix = multiplyMatrices(translateMatrix, initialMatrix);
+
+            return resultMatrix;
+        }
+
+        public int[][] translate3d(int[] xPoints, int[] yPoints, int[] zPoints, int dx, int dy, int dz) {
+            int[][] initialMatrix = new int[xPoints.length][xPoints.length];
+            initialMatrix[0] = xPoints;
+            initialMatrix[1] = yPoints;
+            initialMatrix[2] = zPoints;
+
+            for(int i = 3; i < xPoints.length; i++) {
+                for(int j = 0; j < xPoints.length; j++) {
+                    initialMatrix[i][j] = 1;
+                }
+            }
+
+            double[][] translateMatrix = new double[xPoints.length][xPoints.length];
+            for(int i = 0; i < xPoints.length; i++) {
+                for(int j = 0; j < xPoints.length; j++) {
+                    if(i == j) {
+                        translateMatrix[i][j] = 1;
+                    }
+                    else {
+                        translateMatrix[i][j] = 0;
+                    }
+                }
+            }
+
+            translateMatrix[0][xPoints.length - 1] = dx;
+            translateMatrix[1][xPoints.length - 1] = dy;
+            translateMatrix[2][xPoints.length - 1] = dz;
+
+            int[][] resultMatrix = multiplyMatrices(translateMatrix, initialMatrix);
+
+            return resultMatrix;
+        }
+
 
         public int[][] scale(int[] xPoints, int[] yPoints, int xc, int yc, boolean center, double xScale, double yScale) {
             int xCenter = 0 + xc;
@@ -1063,8 +1144,10 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
                     new int[]{0, 0, 0, 0},
             };
+            int[][] translatedPoints = translate3d(points5[0], points5[1], points5[2], 0, 0, x);
 
-            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
+            //biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
+            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
