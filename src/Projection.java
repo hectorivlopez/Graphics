@@ -131,7 +131,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             this.width = width;
             this.height = height;
 
-            this.director = new int[]{500, 250, 200};
+            this.director = new int[]{800, 200, 1000};
 
             this.origin2D = new int[]{width / 2, height / 2};
 
@@ -139,17 +139,17 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             this.angle = 0;
             this.angle2 = 0;
             this.growing = false;
-            this.x = 500;
+            this.x = 0;
             this.toRight = true;
 
             CustomThread scaleThread = new CustomThread(() -> {
                 if (growing) {
                     scalejeje += 0.1;
-                    if (scalejeje >= 10) growing = false;
+                    if (scalejeje >= 15) growing = false;
                 }
                 else {
                     scalejeje -= 0.1;
-                    if (scalejeje <= 0.5) growing = true;
+                    if (scalejeje <= 1) growing = true;
                 }
             }, 20, () -> false);
             scaleThread.start();
@@ -168,13 +168,13 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             CustomThread moveThread = new CustomThread(() -> {
                 if (toRight) {
                     x ++;
-                    if (x >= 200) toRight = false;
+                    if (x >= 50) toRight = false;
                 }
                 else {
                     x --;
-                    if (x <= -200) toRight = true;
+                    if (x <= -50) toRight = true;
                 }
-            }, 20, () -> false);
+            }, 10, () -> false);
             moveThread.start();
         }
 
@@ -1144,10 +1144,25 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                     new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
                     new int[]{0, 0, 0, 0},
             };
-            int[][] translatedPoints = translate3d(points5[0], points5[1], points5[2], 0, 0, x);
+
+
+            int[][] points6 = new int[][]{
+                    new int[]{-360 + origin2D[0], -350 + origin2D[0], -340 + origin2D[0], -350 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
+            int[][] translatedPoints = translate3d(points6[0], points6[1], points6[2], x, 0, x);
+
+            int[][] points7 = new int[][]{
+                    new int[]{340 + origin2D[0], 350 + origin2D[0], 360 + origin2D[0], 350 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
 
             //biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
-            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
+            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, angle}, null, "perspective", true, Color.white, Color.blue, buffer);
+            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
+            biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scalejeje, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
