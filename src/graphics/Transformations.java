@@ -296,5 +296,51 @@ public class Transformations {
         return rotatedPoints;
     }
 
+    public static int[][] rotateAroundLine(int[] xPoints, int[] yPoints, int[] zPoints, int[] pointA, int[] pointB, double angle) {
+       // Make pointA the origin
+       int x0 = pointA[0];
+       int y0 = pointA[1];
+       int z0 = pointA[2];
+
+       // Vector along the line (pointB - pointA)
+       double ux = pointB[0] - x0;
+       double uy = pointB[1] - y0;
+       double uz = pointB[2] - z0;
+       double norm = Math.sqrt(ux * ux + uy * uy + uz * uz);
+       ux /= norm;
+       uy /= norm;
+       uz /= norm;
+
+       double cosTheta = Math.cos(angle);
+       double sinTheta = Math.sin(angle);
+
+       int[][] resultMatrix = new int[3][xPoints.length];
+
+       // Rotation
+       for (int i = 0; i < xPoints.length; i++) {
+           // Translate point to origin
+           double x = xPoints[i] - x0;
+           double y = yPoints[i] - y0;
+           double z = zPoints[i] - z0;
+
+           // Rotation matrix components
+           double dotProduct = x * ux + y * uy + z * uz;
+           double crossProductX = uy * z - uz * y;
+           double crossProductY = uz * x - ux * z;
+           double crossProductZ = ux * y - uy * x;
+
+           double rotatedX = x * cosTheta + crossProductX * sinTheta + ux * dotProduct * (1 - cosTheta);
+           double rotatedY = y * cosTheta + crossProductY * sinTheta + uy * dotProduct * (1 - cosTheta);
+           double rotatedZ = z * cosTheta + crossProductZ * sinTheta + uz * dotProduct * (1 - cosTheta);
+
+           // Back to original position
+           resultMatrix[0][i] = (int) (rotatedX + x0);
+           resultMatrix[1][i] = (int) (rotatedY + y0);
+           resultMatrix[2][i] = (int) (rotatedZ + z0);
+       }
+
+       return resultMatrix;
+   }
+
 
 }

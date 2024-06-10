@@ -131,7 +131,7 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
             this.width = width;
             this.height = height;
 
-            this.director = new int[]{800, 200, 1000};
+            this.director = new int[]{0, 0, 400};
 
             this.origin2D = new int[]{width / 2, height / 2};
 
@@ -155,12 +155,12 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
             scaleThread.start();
 
             CustomThread rotateThread = new CustomThread(() -> {
-                angle += 0.1;
+                angle += 0.01;
                 if (angle >= 2 * Math.PI) {
                     angle = 0;
                 }
 
-            }, 100, () -> false);
+            }, 10, () -> false);
             rotateThread.start();
 
             CustomThread moveThread = new CustomThread(() -> {
@@ -245,7 +245,7 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
             grid();
             //axis(director, 1, buffer);
 
-            int[][] points5 = new int[][]{
+           /* int[][] points5 = new int[][]{
                     new int[]{-10 + origin2D[0], 0 + origin2D[0], 10 + origin2D[0], 0 + origin2D[0]},
                     new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
                     new int[]{0, 0, 0, 0},
@@ -263,12 +263,132 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
                     new int[]{340 + origin2D[0], 350 + origin2D[0], 360 + origin2D[0], 350 + origin2D[0]},
                     new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
                     new int[]{0, 0, 0, 0},
+            };*/
+
+            //biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, angle}, null, "perspective", true, Color.white, Color.blue, buffer);
+            //biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
+            //biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scale, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
+
+            int xc = 100;
+            int yc = 250;
+            int[][] points = new int[][]{
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
+                    new int[]{yc + 17, yc + 32, yc + 137, yc + 92, yc + 107, yc + 217, yc + 217, yc + 52},
+                    /*new int[]{100, 100, 100, 100, 100, 100, 100, 100},*/
+                    new int[]{100, 104, 116, 99, 101, 127, 126, 79},
             };
 
-            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, angle}, null, "perspective", true, Color.white, Color.blue, buffer);
-            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
-            biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scale, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
+            int[][] points1 = new int[][]{
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
+                    new int[]{yc - 17, yc - 32, yc - 137, yc - 92, yc - 107, yc - 217, yc - 217, yc - 52},
+                    /*new int[]{100, 100, 87, 85, 83, 79, 78, 79},*/
+                    new int[]{100, 104, 116, 99, 101, 127, 126, 79},
 
+            };
+            int[][] points2 = new int[][]{
+                    new int[]{xc + 0, xc + 420, xc + 430, xc + 420, xc + 0},
+                    new int[]{yc + 17, yc + 39, yc + 0, yc - 39, yc - 17},
+                    new int[]{100, 87, 87, 87, 100},
+
+            };
+
+            int[][] points3 = new int[][]{
+                    new int[]{xc + 420, xc + 545, xc + 545, xc + 505, xc + 505, xc + 465, xc + 465, xc + 505, xc + 505, xc + 545, xc + 545, xc + 420, xc + 430},
+                    new int[]{yc + 39, yc + 45, yc + 25, yc + 25, yc + 12, yc + 12, yc - 12, yc - 12, yc -  25, yc - 25, yc - 45, yc - 39, yc - 0},
+                    new int[]{87, 83, 83, 84, 84, 86, 86, 84, 84, 83, 83, 87, 87},
+            };
+
+
+            int[][] points4 = new int[][]{
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
+                    new int[]{yc + 17, yc + 32, yc + 137, yc + 92, yc + 107, yc + 217, yc + 217, yc + 52},
+                    new int[]{130, 130, 130, 130, 130, 130, 130, 130},
+            };
+
+            int[][] points5 = new int[][]{
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
+                    new int[]{yc - 17, yc - 32, yc - 137, yc - 92, yc - 107, yc - 217, yc - 217, yc - 52},
+                    new int[]{130, 130, 130, 130, 130, 130, 130, 130},
+            };
+
+            int[] p1 = new int[]{points2[0][0], points2[1][2], points2[2][0]};
+            int[] p2 = new int[]{points2[0][2], points2[1][2], points2[2][0]};
+
+            int[] pa = new int[]{points2[0][0], points2[1][0], points2[2][0]};
+            int[] pb = new int[]{points2[0][4], points2[1][4], points2[2][0]};
+
+            int[] p1a = new int[]{points1[0][0], points1[1][0], points1[2][0]};
+            int[] p1b = new int[]{points1[0][7], points1[1][7], points1[2][7]};
+
+            int[][] rotated = Transformations.rotateAroundLine(
+                    points[0],
+                    points[1],
+                    points[2],
+                    pa,
+                    pb,
+                    -0.03
+            );
+
+            int[][] rotated1 = Transformations.rotateAroundLine(
+                    points1[0],
+                    points1[1],
+                    points1[2],
+                    p1a,
+                    p1b,
+                    -0.3
+            );
+
+
+
+            int[][] rotated2 = Transformations.rotateAroundLine(
+                    points2[0],
+                    points2[1],
+                    points2[2],
+                    pa,
+                    pb,
+                    -0.03
+            );
+
+            int[][] rotated3 = Transformations.rotateAroundLine(
+                    points3[0],
+                    points3[1],
+                    points3[2],
+                    pa,
+                    pb,
+                    -0.03
+            );
+
+            int[][] rotated4 = Transformations.rotateAroundLine(
+                    points4[0],
+                    points4[1],
+                    points4[2],
+                    pa,
+                    pb,
+                   0.05
+            );
+
+            int[][] rotated5 = Transformations.rotateAroundLine(
+                    points5[0],
+                    points5[1],
+                    points5[2],
+                    pa,
+                    pb,
+                   0.05
+            );
+            /*for(int i = 0; i < points1.length; i++) {
+                for(int j = 0; j < points1[0].length; j++) {
+                    System.out.print(rotated1[i][j] + ", ");
+
+                }
+                System.out.println("");
+            }*/
+            surface(points, angle, p1, p2, director, "oblique", Color.white, buffer);
+            surface(points1, angle, p1, p2, director, "oblique", Color.white, buffer);
+            surface(points3, angle, p1, p2, director, "oblique", Color.white, buffer);
+            surface(points2, angle, p1, p2, director, "oblique", Color.red, buffer);
+
+            /*surface(rotated4, angle, p1, p2, director, "oblique", Color.green, buffer);
+            surface(rotated5, angle, p1, p2, director, "oblique", Color.green, buffer);*/
 
             g.drawImage(buffer, 0, 0, this);
         }

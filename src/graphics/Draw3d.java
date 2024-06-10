@@ -2,6 +2,7 @@ package graphics;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.nio.Buffer;
 import java.util.Arrays;
 import static graphics.Transformations.*;
 import static graphics.Draw.*;
@@ -314,6 +315,69 @@ public class Draw3d {
                 }
             }
         }
+    }
+
+    public static void surface(int[][] points, double angle, int[] p1, int[] p2, int[] director, String projection, Color color, BufferedImage buffer) {
+        int[][] rotated = rotateAroundLine(
+                points[0],
+                points[1],
+                points[2],
+                p1,
+                p2,
+                angle
+        );
+        //System.out.println(rotated[0][2]);
+
+        int[][] projectedPoints = projection(rotated, director, projection);
+
+        double[] perpendicularVector = Utils.calculatePerpendicularVector(rotated[0], rotated[1], rotated[2], 10);
+
+        double[] directionVector = new double[]{
+                director[0],
+                director[1],
+                director[2]
+        };
+
+        if (projection.equals("orthogonal")) {
+            directionVector = new double[]{0, 0, 1};
+        }
+
+        if (projection.equals("perspective")) {
+            // Calculate the centroid
+            int[] xPoints = rotated[0];
+            int[] yPoints = rotated[1];
+            int[] zPoints = rotated[2];
+
+            int numVertices = xPoints.length;
+
+            int xSum = 0;
+            int ySum = 0;
+            int zSum = 0;
+
+            for (int i = 0; i < numVertices; i++) {
+                xSum += xPoints[i];
+                ySum += yPoints[i];
+                zSum += zPoints[i];
+            }
+
+            int xc = (int) ((double) xSum / ((double) numVertices));
+            int yc = (int) ((double) ySum / ((double) numVertices));
+            int zc = (int) ((double) zSum / ((double) numVertices));
+
+            directionVector = new double[]{
+                    director[0] - xc,
+                    director[1] - yc,
+                    director[2] - zc
+            };
+        }
+
+        double dotProduct = Utils.calculateDotProduct(perpendicularVector, directionVector);
+
+        // Drawing
+        if (dotProduct < 0  ) {
+
+        }
+            Draw.drawPolygon(projectedPoints[0], projectedPoints[1], color, buffer);
     }
 
 }
