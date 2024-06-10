@@ -7,16 +7,20 @@ import java.awt.image.BufferedImage;
 
 import static graphics.Draw3d.*;
 
-public class Window extends JFrame {
+public class Window3d extends JFrame implements ActionListener, MouseListener, MouseMotionListener {
     private int width;
     private int height;
     private int titleBarHeight;
     private JPanel bgPanel;
     private CustomPanel canvasPanel;
+    private JPanel bottomBar;
+    public JLabel directorLabel;
+    public int xPressed, yPressed;
+    public int xDirInit, yDirInit;
     boolean firstResize;
     public boolean isMacOS;
 
-    public Window() {
+    public Window3d() {
         this.isMacOS = System.getProperty("os.name").toLowerCase().contains("mac");
         if (isMacOS) {
             final JRootPane rootPane = this.getRootPane();
@@ -57,8 +61,19 @@ public class Window extends JFrame {
         canvasPanel = new CustomPanel(width, height);
         canvasPanel.setBounds(0, 0, width, height);
         canvasPanel.setLayout(null);
-
+        canvasPanel.addMouseListener(this);
+        canvasPanel.addMouseMotionListener(this);
+        canvasPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                int notches = e.getWheelRotation();
+                canvasPanel.director[2] += notches;
+                canvasPanel.repaint();
+                directorLabel.setText("P(" + canvasPanel.director[0] + ", " + canvasPanel.director[1] + ", " + canvasPanel.director[2] + ")");
+            }
+        });
         bgPanel.add(canvasPanel);
+
 
     }
 
@@ -68,7 +83,24 @@ public class Window extends JFrame {
         setBackground(new Color(39, 43, 76));
 
         bgPanel.setBounds(0, 0, width, height);
+        if (!firstResize) {
+            bottomBar.remove(directorLabel);
+            bgPanel.remove(bottomBar);
+        }
 
+        bottomBar = new JPanel();
+        bottomBar.setLayout(null);
+        bottomBar.setBounds(0, height - 40, this.width, 40);
+        bottomBar.setBackground(new Color(30, 32, 47));
+        bgPanel.add(bottomBar);
+
+        directorLabel = new JLabel();
+        directorLabel.setBounds(0, 0, this.width, 40);
+        directorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        directorLabel.setVerticalAlignment(SwingConstants.CENTER);
+        directorLabel.setForeground(Color.white);
+        directorLabel.setText("P(" + canvasPanel.director[0] + ", " + canvasPanel.director[1] + ", " + canvasPanel.director[2] + ")");
+        bottomBar.add(directorLabel);
         bgPanel.repaint();
 
         // Set new bounds for canvasPanel
@@ -97,6 +129,10 @@ public class Window extends JFrame {
             this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             this.width = width;
             this.height = height;
+
+            this.director = new int[]{800, 200, 1000};
+
+            this.origin2D = new int[]{width / 2, height / 2};
 
             // Transformations
             this.scale = 1;
@@ -144,6 +180,7 @@ public class Window extends JFrame {
             this.height = height;
 
             this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            origin2D = new int[]{width / 2, height / 2};
         }
 
         // ------------------------------ Guides ------------------------------
@@ -178,21 +215,101 @@ public class Window extends JFrame {
             }
         }
 
+        public void axis(int[] director, double scale, BufferedImage buffer) {
+            int[][] points = new int[][]{
+                    new int[]{0, 0, 0},
+                    new int[]{500, 0, 0},
+                    new int[]{-500, 0, 0},
+                    new int[]{0, 500, 0},
+                    new int[]{0, -500, 0},
+                    new int[]{0, 0, 500},
+                    new int[]{0, 0, -500},
+            };
+            int[][] projectedPoints = projection(points, director, "oblique");
+
+            int[] xPoints = projectedPoints[0];
+            int[] yPoints = projectedPoints[1];
+
+            for (int i = 1; i <= 3; i++) {
+                Draw.drawLine(xPoints[(i * 2) - 1], yPoints[(i * 2) - 1], xPoints[i * 2], yPoints[i * 2], null, buffer);
+            }
+        }
+
         public void paint(Graphics g) {
             super.paint(g);
-
+            
             Graphics gBuffer = buffer.getGraphics();
             gBuffer.setColor(new Color(39, 43, 76));
             gBuffer.fillRect(0, 0, this.getWidth(), this.getHeight());
             grid();
+            //axis(director, 1, buffer);
 
             g.drawImage(buffer, 0, 0, this);
         }
     }
 
+    // ---------------------------------------- Listeners ----------------------------------------
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        this.xPressed = e.getX();
+        this.yPressed = e.getY();
+
+        this.xDirInit = canvasPanel.director[0];
+        this.yDirInit = canvasPanel.director[1];
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+
+        int xDirector = -(e.getX() - xPressed) / 1;
+        int yDirector = -(e.getY() - yPressed) / 1;
+
+        canvasPanel.director[0] = xDirInit + xDirector;
+        canvasPanel.director[1] = yDirInit + yDirector;
+        canvasPanel.repaint();
+
+        directorLabel.setText("P(" + canvasPanel.director[0] + ", " + canvasPanel.director[1] + ", " + canvasPanel.director[2] + ")");
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
+    }
+
     // ---------------------------------------- Execution ----------------------------------------
     public static void main(String[] args) {
+        Window3d window = new Window3d();
 
+        CustomThread thread = new CustomThread(() -> {
+            window.bgPanel.repaint();
+        }, 20, () -> false);
+        thread.start();
 
     }
 }
