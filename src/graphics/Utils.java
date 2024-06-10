@@ -1,6 +1,5 @@
 package graphics;
 
-import cosa.CropLines;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

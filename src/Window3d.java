@@ -1,4 +1,5 @@
 import graphics.Draw;
+import graphics.Transformations;
 
 import javax.swing.*;
 import java.awt.*;
@@ -243,6 +244,31 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
             gBuffer.fillRect(0, 0, this.getWidth(), this.getHeight());
             grid();
             //axis(director, 1, buffer);
+
+            int[][] points5 = new int[][]{
+                    new int[]{-10 + origin2D[0], 0 + origin2D[0], 10 + origin2D[0], 0 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
+
+
+            int[][] points6 = new int[][]{
+                    new int[]{-360 + origin2D[0], -350 + origin2D[0], -340 + origin2D[0], -350 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
+            int[][] translatedPoints = Transformations.translate3d(points6[0], points6[1], points6[2], x, 0, x);
+
+            int[][] points7 = new int[][]{
+                    new int[]{340 + origin2D[0], 350 + origin2D[0], 360 + origin2D[0], 350 + origin2D[0]},
+                    new int[]{0 + origin2D[1], 10 + origin2D[1], 0 + origin2D[1], -10 + origin2D[1]},
+                    new int[]{0, 0, 0, 0},
+            };
+
+            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, angle}, null, "perspective", true, Color.white, Color.blue, buffer);
+            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
+            biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scale, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
+
 
             g.drawImage(buffer, 0, 0, this);
         }
