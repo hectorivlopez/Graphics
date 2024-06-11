@@ -269,20 +269,21 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
             //biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
             //biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scale, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
 
-            int xc = 100;
+           /* int xc = 100;
             int yc = 250;
             int[][] points = new int[][]{
                     new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
                     new int[]{yc + 17, yc + 32, yc + 137, yc + 92, yc + 107, yc + 217, yc + 217, yc + 52},
-                    /*new int[]{100, 100, 100, 100, 100, 100, 100, 100},*/
-                    new int[]{100, 104, 116, 99, 101, 127, 126, 79},
+                    *//*new int[]{100, 100, 100, 100, 100, 100, 100, 100},*//*
+                    *//*new int[]{100, 104, 116, 99, 101, 127, 126, 79},*//*
+                    new int[]{100, 107, 107, 92, 92, 110, 110, 79},
             };
 
             int[][] points1 = new int[][]{
                     new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
                     new int[]{yc - 17, yc - 32, yc - 137, yc - 92, yc - 107, yc - 217, yc - 217, yc - 52},
-                    /*new int[]{100, 100, 87, 85, 83, 79, 78, 79},*/
-                    new int[]{100, 104, 116, 99, 101, 127, 126, 79},
+                    *//*new int[]{100, 100, 87, 85, 83, 79, 78, 79},*//*
+                    new int[]{100, 107, 107, 92, 92, 110, 110, 79},
 
             };
             int[][] points2 = new int[][]{
@@ -300,25 +301,31 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
 
 
             int[][] points4 = new int[][]{
-                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
-                    new int[]{yc + 17, yc + 32, yc + 137, yc + 92, yc + 107, yc + 217, yc + 217, yc + 52},
-                    new int[]{130, 130, 130, 130, 130, 130, 130, 130},
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 720, xc + 785},
+                    new int[]{yc, yc + 32, yc + 137, yc + 92, yc + 107, yc + 217, yc + 217, yc},
+                    *//*new int[]{130, 130, 130, 130, 130, 130, 130, 130},*//*
+                    new int[]{130, 123, 123, 138, 138, 120, 120, 153},
             };
 
             int[][] points5 = new int[][]{
-                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 710, xc + 680},
-                    new int[]{yc - 17, yc - 32, yc - 137, yc - 92, yc - 107, yc - 217, yc - 217, yc - 52},
-                    new int[]{130, 130, 130, 130, 130, 130, 130, 130},
+                    new int[]{xc + 0, xc + 0, xc + 420, xc + 485, xc + 560, xc + 675, xc + 720, xc + 785},
+                    new int[]{yc, yc - 32, yc - 137, yc - 92, yc - 107, yc - 217, yc - 217, yc},
+                    *//*new int[]{130, 130, 130, 130, 130, 130, 130, 130},*//*
+                    new int[]{130, 123, 123, 138, 138, 120, 120, 153},
+
             };
 
             int[] p1 = new int[]{points2[0][0], points2[1][2], points2[2][0]};
             int[] p2 = new int[]{points2[0][2], points2[1][2], points2[2][0]};
 
-            int[] pa = new int[]{points2[0][0], points2[1][0], points2[2][0]};
-            int[] pb = new int[]{points2[0][4], points2[1][4], points2[2][0]};
+            int[] pa = new int[]{points2[0][0], points2[1][0], points2[2][0]+ 30};
+            int[] pb = new int[]{points2[0][4], points2[1][4], points2[2][0]+ 30};
 
             int[] p1a = new int[]{points1[0][0], points1[1][0], points1[2][0]};
             int[] p1b = new int[]{points1[0][7], points1[1][7], points1[2][7]};
+
+            int[] p2a = new int[]{points4[0][0], points4[1][0], points4[2][0]};
+            int[] p2b = new int[]{points4[0][7], points4[1][7], points4[2][7]};
 
             int[][] rotated = Transformations.rotateAroundLine(
                     points[0],
@@ -364,7 +371,7 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
                     points4[2],
                     pa,
                     pb,
-                   0.05
+                   0.03
             );
 
             int[][] rotated5 = Transformations.rotateAroundLine(
@@ -373,23 +380,22 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
                     points5[2],
                     pa,
                     pb,
-                   0.05
+                   0.03
             );
-            /*for(int i = 0; i < points1.length; i++) {
-                for(int j = 0; j < points1[0].length; j++) {
-                    System.out.print(rotated1[i][j] + ", ");
+            for(int i = 0; i < points4.length; i++) {
+                for(int j = 0; j < points4[0].length; j++) {
+                    System.out.print(rotated4[i][j] + ", ");
 
                 }
                 System.out.println("");
-            }*/
-            surface(points, angle, p1, p2, director, "oblique", Color.white, buffer);
-            surface(points1, angle, p1, p2, director, "oblique", Color.white, buffer);
-            surface(points3, angle, p1, p2, director, "oblique", Color.white, buffer);
-            surface(points2, angle, p1, p2, director, "oblique", Color.red, buffer);
-
-            /*surface(rotated4, angle, p1, p2, director, "oblique", Color.green, buffer);
-            surface(rotated5, angle, p1, p2, director, "oblique", Color.green, buffer);*/
-
+            }
+            surface(points, -Math.PI /2, p1, p2, director, "oblique", 1, Color.green, buffer);
+            surface(points1, -Math.PI /2, p1, p2, director, "oblique", -1, Color.white, buffer);
+            surface(points3, -Math.PI /2, p1, p2, director, "oblique", 1, Color.white, buffer);
+            surface(points2, -Math.PI /2, p1, p2, director, "oblique", 1, Color.red, buffer);
+            surface(points4, -Math.PI /2, p1, p2, director, "oblique", -1, Color.green, buffer);
+            surface(points5, -Math.PI /2, p1, p2, director, "oblique", 1, Color.red, buffer);
+*/
             g.drawImage(buffer, 0, 0, this);
         }
     }
@@ -452,10 +458,10 @@ public class Window3d extends JFrame implements ActionListener, MouseListener, M
     public static void main(String[] args) {
         Window3d window = new Window3d();
 
-        CustomThread thread = new CustomThread(() -> {
+       /* CustomThread thread = new CustomThread(() -> {
             window.bgPanel.repaint();
         }, 20, () -> false);
-        thread.start();
+        thread.start();*/
 
     }
 }

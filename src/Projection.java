@@ -1,3 +1,5 @@
+import graphics.Draw;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -256,7 +258,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             return result;
         }
 
-        public double[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude) {
+        public double[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude, double direction) {
             // Vectors u and v
             int[] A = new int[]{xPoints[0], yPoints[0], zPoints[0]};
             int[] B = new int[]{xPoints[1], yPoints[1], zPoints[1]};
@@ -285,9 +287,9 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
 
             // Scale the normal vector
             double[] scaled = new double[]{
-                    /*(int)*/ (normalized[0] * magnitude),
-                    /*(int)*/ (normalized[1] * magnitude),
-                    /*(int)*/ (normalized[2] * magnitude)
+                    /*(int)*/ (normalized[0] * magnitude * direction),
+                    /*(int)*/ (normalized[1] * magnitude * direction),
+                    /*(int)*/ (normalized[2] * magnitude * direction)
             };
 
             return scaled;
@@ -894,7 +896,7 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             int zc = (int) ((double) zSum / ((double) numVertices));
 
             // Height vector
-            double[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height);
+            double[] heightVector = calculatePerpendicularVector(points[0], points[1], points[2], height, 1);
 
             xc += (int) heightVector[0];
             yc += (int) heightVector[1];
@@ -971,8 +973,8 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             if(p0 == null) p0 = centroid;
 
             // Calculate height vectors
-            double[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
-            double[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
+            double[] heightVector1 = calculatePerpendicularVector(xPoints, yPoints, zPoints, height, 1);
+            double[] heightVector2 = calculatePerpendicularVector(xPoints, yPoints, zPoints, -height, 1);
 
             if (onlyFront) {
                 // Matrix with all the points
@@ -1015,7 +1017,9 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                         int[] faceYPoints = {rotatedAllPoints[1][face[0]], rotatedAllPoints[1][face[1]], rotatedAllPoints[1][face[2]]};
                         int[] faceZPoints = {rotatedAllPoints[2][face[0]], rotatedAllPoints[2][face[1]], rotatedAllPoints[2][face[2]]};
 
-                        double[] perpendicularVector = calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10);
+                        double[] perpendicularVector = calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 50, i >= numVertices ? -1 : 1);
+
+
 
                         double[] directionVector = new double[]{
                                 director[0],
@@ -1039,12 +1043,27 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
                                     director[1] - faceCentroid[1],
                                     director[2] - faceCentroid[2]
                             };
+
+                            /*int[][] vec = new int[][] {
+                                    new int[]{(int) faceCentroid[0], (int) (faceCentroid[0] + perpendicularVector[0])},
+                                    new int[]{(int) faceCentroid[1], (int) (faceCentroid[1] + perpendicularVector[1])},
+                                    new int[]{(int) faceCentroid[2], (int) (faceCentroid[2] + perpendicularVector[2])},
+                            };
+
+                            int[][] proj = projection(
+                                    vec,
+                                    director,
+                                    projection
+                            );
+
+                            Draw.fillCircle(proj[0][0], proj[1][0], 3, Color.red, buffer);
+                            drawLine(proj[0][0], proj[1][0], proj[0][1], proj[1][1], Color.green, buffer);*/
                         }
 
                         double dotProduct = calculateDotProduct(perpendicularVector, directionVector);
 
                         // Drawing
-                        if (dotProduct < 0 && i >= numVertices || dotProduct > 0 && i < numVertices) {
+                        if (dotProduct > 0) {
                             int[] projectedFaceXPoints = {projectedPoints[0][face[0]], projectedPoints[0][face[1]], projectedPoints[0][face[2]]};
                             int[] projectedFaceYPoints = {projectedPoints[1][face[0]], projectedPoints[1][face[1]], projectedPoints[1][face[2]]};
 
@@ -1160,9 +1179,9 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
             };
 
             //biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, 0}, null, "perspective", true, Color.white, Color.blue, buffer);
-            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, angle, angle}, null, "perspective", true, Color.white, Color.blue, buffer);
-            biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
-            biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scalejeje, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
+            biPyramid(points5, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 2, 0, 0}, null, "perspective", true, Color.white, null, buffer);
+            //biPyramid(translatedPoints, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, 10, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.red, buffer);
+            //biPyramid(points7, 10, new int[] {director[0] - origin2D[0], director[1] - origin2D[1], director[2]}, scalejeje, new double[]{Math.PI / 8, 0, 0}, null, "perspective", true, Color.white, Color.green, buffer);
 
            /* int[][] star = star(0, 0);
             prism(star, 85, director, 10, origin2D, "oblique", 1, Color.green, buffer);*/
@@ -1229,10 +1248,10 @@ public class Projection extends JFrame implements ActionListener, MouseListener,
     public static void main(String[] args) {
         Projection window = new Projection();
 
-        CustomThread thread = new CustomThread(() -> {
+       /* CustomThread thread = new CustomThread(() -> {
             window.bgPanel.repaint();
         }, 20, () -> false);
-        thread.start();
+        thread.start();*/
 
     }
 }

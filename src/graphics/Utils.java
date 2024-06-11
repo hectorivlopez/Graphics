@@ -54,7 +54,7 @@ public class Utils {
         return new int[]{x0 + vector[0], y0 + vector[1]};
     }
 
-    public double[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude, double direction) {
+    public static double[] calculatePerpendicularVector(int[] xPoints, int[] yPoints, int[] zPoints, int magnitude, double direction) {
         // Vectors u and v
         int[] A = new int[]{xPoints[0], yPoints[0], zPoints[0]};
         int[] B = new int[]{xPoints[1], yPoints[1], zPoints[1]};

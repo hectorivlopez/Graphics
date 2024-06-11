@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.nio.Buffer;
 import java.util.Arrays;
+
 import static graphics.Transformations.*;
 import static graphics.Draw.*;
 
@@ -120,13 +121,13 @@ public class Draw3d {
         int zc = (int) ((double) zSum / ((double) numVertices));
 
         // Height vector
-        double[] heightVector = Utils.calculatePerpendicularVector(points[0], points[1], points[2], height);
+        double[] heightVector = Utils.calculatePerpendicularVector(points[0], points[1], points[2], height, 1);
 
         xc += (int) heightVector[0];
         yc += (int) heightVector[1];
         zc += (int) heightVector[2];
 
-        if(p0 == null) p0 = new int[]{xc, yc, zc};
+        if (p0 == null) p0 = new int[]{xc, yc, zc};
 
         // Top face
         int[][] topPoints = new int[3][points[0].length];
@@ -192,11 +193,11 @@ public class Draw3d {
 
         int[] centroid = {xc, yc, zc};
 
-        if(p0 == null) p0 = centroid;
+        if (p0 == null) p0 = centroid;
 
         // Calculate height vectors
-        double[] heightVector1 = Utils.calculatePerpendicularVector(xPoints, yPoints, zPoints, height);
-        double[] heightVector2 = Utils.calculatePerpendicularVector(xPoints, yPoints, zPoints, -height);
+        double[] heightVector1 = Utils.calculatePerpendicularVector(xPoints, yPoints, zPoints, height, 1);
+        double[] heightVector2 = Utils.calculatePerpendicularVector(xPoints, yPoints, zPoints, -height, 1);
 
         if (onlyFront) {
             // Matrix with all the points
@@ -239,7 +240,7 @@ public class Draw3d {
                     int[] faceYPoints = {rotatedAllPoints[1][face[0]], rotatedAllPoints[1][face[1]], rotatedAllPoints[1][face[2]]};
                     int[] faceZPoints = {rotatedAllPoints[2][face[0]], rotatedAllPoints[2][face[1]], rotatedAllPoints[2][face[2]]};
 
-                    double[] perpendicularVector = Utils.calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10);
+                    double[] perpendicularVector = Utils.calculatePerpendicularVector(faceXPoints, faceYPoints, faceZPoints, 10, 1);
 
                     double[] directionVector = new double[]{
                             director[0],
@@ -280,8 +281,7 @@ public class Draw3d {
                     }
                 }
             }
-        }
-        else {
+        } else {
             int[][] heightsPoints = new int[][]{
                     new int[]{xc + (int) heightVector1[0], xc + (int) heightVector2[0], 1},
                     new int[]{yc + (int) heightVector1[1], yc + (int) heightVector2[1], 1},
@@ -317,7 +317,7 @@ public class Draw3d {
         }
     }
 
-    public static void surface(int[][] points, double angle, int[] p1, int[] p2, int[] director, String projection, Color color, BufferedImage buffer) {
+    public static void surface(int[][] points, double angle, int[] p1, int[] p2, int[] director, String projection, double direction, Color color, BufferedImage buffer) {
         int[][] rotated = rotateAroundLine(
                 points[0],
                 points[1],
@@ -326,58 +326,63 @@ public class Draw3d {
                 p2,
                 angle
         );
-        //System.out.println(rotated[0][2]);
 
         int[][] projectedPoints = projection(rotated, director, projection);
 
-        double[] perpendicularVector = Utils.calculatePerpendicularVector(rotated[0], rotated[1], rotated[2], 10);
+        if(direction != 0) {
+            // Back-face culling
+            double[] perpendicularVector = Utils.calculatePerpendicularVector(rotated[0], rotated[1], rotated[2], 10, direction);
 
-        double[] directionVector = new double[]{
-                director[0],
-                director[1],
-                director[2]
-        };
+            double[] directionVector = new double[]{
+                    director[0],
+                    director[1],
+                    director[2]
+            };
 
-        if (projection.equals("orthogonal")) {
-            directionVector = new double[]{0, 0, 1};
-        }
-
-        if (projection.equals("perspective")) {
-            // Calculate the centroid
-            int[] xPoints = rotated[0];
-            int[] yPoints = rotated[1];
-            int[] zPoints = rotated[2];
-
-            int numVertices = xPoints.length;
-
-            int xSum = 0;
-            int ySum = 0;
-            int zSum = 0;
-
-            for (int i = 0; i < numVertices; i++) {
-                xSum += xPoints[i];
-                ySum += yPoints[i];
-                zSum += zPoints[i];
+            if (projection.equals("orthogonal")) {
+                directionVector = new double[]{0, 0, 1};
             }
 
-            int xc = (int) ((double) xSum / ((double) numVertices));
-            int yc = (int) ((double) ySum / ((double) numVertices));
-            int zc = (int) ((double) zSum / ((double) numVertices));
+            if (projection.equals("perspective")) {
+                // Calculate the centroid
+                int[] xPoints = rotated[0];
+                int[] yPoints = rotated[1];
+                int[] zPoints = rotated[2];
 
-            directionVector = new double[]{
-                    director[0] - xc,
-                    director[1] - yc,
-                    director[2] - zc
-            };
+                int numVertices = xPoints.length;
+
+                int xSum = 0;
+                int ySum = 0;
+                int zSum = 0;
+
+                for (int i = 0; i < numVertices; i++) {
+                    xSum += xPoints[i];
+                    ySum += yPoints[i];
+                    zSum += zPoints[i];
+                }
+
+                int xc = (int) ((double) xSum / ((double) numVertices));
+                int yc = (int) ((double) ySum / ((double) numVertices));
+                int zc = (int) ((double) zSum / ((double) numVertices));
+
+                directionVector = new double[]{
+                        director[0] - xc,
+                        director[1] - yc,
+                        director[2] - zc
+                };
+            }
+
+            double dotProduct = Utils.calculateDotProduct(perpendicularVector, directionVector);
+
+            // Drawing
+            if (dotProduct > 0) {
+                Draw.drawPolygon(projectedPoints[0], projectedPoints[1], color, buffer);
+            }
         }
-
-        double dotProduct = Utils.calculateDotProduct(perpendicularVector, directionVector);
-
-        // Drawing
-        if (dotProduct < 0  ) {
-
-        }
+        else {
             Draw.drawPolygon(projectedPoints[0], projectedPoints[1], color, buffer);
+        }
+
     }
 
 }
